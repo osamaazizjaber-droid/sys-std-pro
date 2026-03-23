@@ -164,6 +164,14 @@ if (!window.WMS_SETTINGS_LOADED) {
     };
 
     function init() {
+      // Security: Disable Right-Click and DevTools
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      document.addEventListener('keydown', e => {
+          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) || (e.ctrlKey && e.key.toUpperCase() === 'U')) {
+              e.preventDefault();
+          }
+      });
+
       ['theme', 'dark', 'lang', 'font'].forEach(k => apply(k, get(k)));
       document.addEventListener('click', (e) => {
         const tr = e.target.closest('[data-wms-settings-trigger]');
