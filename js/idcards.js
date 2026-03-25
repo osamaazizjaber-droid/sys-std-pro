@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const listContainer = document.getElementById('student-list-container');
     const totalCount = document.getElementById('total-student-count');
     const searchInput = document.getElementById('search-students');
+    const filterStage = document.getElementById('filter-stage');
     const selectAllCheckbox = document.getElementById('select-all-students');
     const printCountBadge = document.getElementById('print-count-badge');
     
@@ -130,19 +131,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Search
-    if(searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = studentsData.filter(w => 
+    function applyFilters() {
+        const term = searchInput?.value.toLowerCase() || '';
+        const stage = filterStage?.value || 'all';
+
+        const filtered = studentsData.filter(w => {
+            const matchesSearch = !term || 
                 (w.student_name && w.student_name.toLowerCase().includes(term)) || 
-                (w.student_id && w.student_id.toString().toLowerCase().includes(term)) ||
-                (w.grade && w.grade.toLowerCase().includes(term))
-            );
-            renderList(filtered);
-            updatePrintCount();
+                (w.student_id && w.student_id.toString().toLowerCase().includes(term));
+            
+            const matchesStage = stage === 'all' || w.grade === stage;
+
+            return matchesSearch && matchesStage;
         });
+
+        renderList(filtered);
+        updatePrintCount();
     }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (filterStage) filterStage.addEventListener('change', applyFilters);
     
     // Select All Checkbox
     if(selectAllCheckbox) {
