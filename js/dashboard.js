@@ -7,47 +7,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const kpiTotalWorkers = document.getElementById('kpi-total-students');
+    const kpiTotalStudents = document.getElementById('kpi-total-students');
     const kpiPresentToday = document.getElementById('kpi-present-today');
-    const kpiAdvancesTotal = document.getElementById('kpi-advances-total');
+    const kpiTotalProfessors = document.getElementById('kpi-total-professors');
 
-    try {
-        // Fetch Total Workers
-        const { count: studentsCount, error: wError } = await supabase
-            .from('students')
-            .select('*', { count: 'exact', head: true });
-        
-        if (wError) throw wError;
-        if (kpiTotalWorkers) kpiTotalWorkers.textContent = studentsCount || 0;
+    async function loadMetrics() {
+        try {
+            const currentYear = window.WMSSettings ? window.WMSSettings.get('academic_year') : '';
 
-        // Fetch Present Today (Local Timezone Safe)
-        const d = new Date();
-        const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        const { count: presentCount, error: pError } = await supabase
-            .from('attendance')
-            .select('*', { count: 'exact', head: true })
-            .eq('date', today)
-            .in('status', ['Present', 'Active Shift', 'Completed']);
-        
-        if (pError) throw pError;
-        if (kpiPresentToday) kpiPresentToday.textContent = presentCount || 0;
+            // 1. Total Students
+            let studentQuery = supabase.from('students').select('*', { count: 'exact', head: true });
+            if (currentYear) studentQuery = studentQuery.eq('academic_year', currentYear);
+            
+            const { count: studentsCount, error: sErr } = await studentQuery;
+            if (sErr) throw sErr;
+            if (kpiTotalStudents) kpiTotalStudents.textContent = studentsCount || 0;
 
-        // Fetch Total Payroll (Sum of daily salaries of all students)
-        const kpiTotalPayroll = document.getElementById('kpi-total-professors');
-         = await supabase.from('students').select('salary');
-        let totalPayroll = 0;
-        if(wData) {
-            wData.forEach(w => {
-                totalPayroll += (w.salary || 0);
-            });
+            // 2. Present Today
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            
+            let attendanceQuery = supabase.from('attendance')
+                .select('*', { count: 'exact', head: true })
+                .eq('date', today)
+                .in('status', ['Present', 'Active Shift', 'Completed']);
+                
+            // Optional: Filter attendance by academic year if students record in it matches current
+            // For now, let's keep it date-based but verify naming
+            
+            const { count: presentCount, error: pErr } = await attendanceQuery;
+            if (pErr) throw pErr;
+            if (kpiPresentToday) kpiPresentToday.textContent = presentCount || 0;
+
+            // 3. Total Professors
+            const { count: profsCount, error: profErr } = await supabase
+                .from('professors')
+                .select('*', { count: 'exact', head: true });
+            
+            if (profErr) throw profErr;
+            if (kpiTotalProfessors) kpiTotalProfessors.textContent = profsCount || 0;
+
+        } catch (err) {
+            console.error("Error loading dashboard metrics:", err);
+            if (kpiTotalStudents) kpiTotalStudents.textContent = "Err";
+            if (kpiPresentToday) kpiPresentToday.textContent = "Err";
+            if (kpiTotalProfessors) kpiTotalProfessors.textContent = "Err";
         }
-        if(kpiTotalPayroll) 
-
-    } catch (err) {
-        console.error("Error loading dashboard metrics:", err);
-        if (kpiTotalWorkers) kpiTotalWorkers.textContent = "Err";
-        if (kpiPresentToday) kpiPresentToday.textContent = "Err";
-        const kpiTotalPayrollErr = document.getElementById('kpi-total-professors');
-        if (kpiTotalPayrollErr) kpiTotalPayrollErr.textContent = "Err";
     }
+
+    loadMetrics();
+
+    // Re-load metrics if academic year changes
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'wms-pro-settings') {
+            loadMetrics();
+        }
+    });
 });
