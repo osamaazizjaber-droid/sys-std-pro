@@ -234,19 +234,41 @@
                         </div>
                     </div>
 
+                    <!-- Search & Filter Row -->
+                    <div class="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+                        <div class="relative w-full md:w-96">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                            <input type="text" id="search-students" class="w-full bg-white border-slate-200 pl-10 pr-4 py-2 rounded-xl text-sm focus:ring-primary focus:border-primary shadow-sm" data-i18n-placeholder="search-students" placeholder="Search by name or ID...">
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <span class="material-symbols-outlined text-slate-400">filter_list</span>
+                            <select id="filter-stage" class="bg-white border-slate-200 py-2 px-4 rounded-xl text-sm focus:ring-primary focus:border-primary cursor-pointer w-full md:w-64 shadow-sm">
+                                <option value="all" data-i18n="all-stages">All Stages</option>
+                                <option value="المرحلة الاولى - الصباحي">المرحلة الاولى - الصباحي</option>
+                                <option value="المرحلة الاولى - المسائي">المرحلة الاولى - المسائي</option>
+                                <option value="المرحلة الثانية - الصباحي">المرحلة الثانية - الصباحي</option>
+                                <option value="المرحلة الثانية - المسائي">المرحلة الثانية - المسائي</option>
+                                <option value="المرحلة الثالثة - الصباحي">المرحلة الثالثة - الصباحي</option>
+                                <option value="المرحلة الثالثة - المسائي">المرحلة الثالثة - المسائي</option>
+                                <option value="المرحلة الرابعة - الصباحي">المرحلة الرابعة - الصباحي</option>
+                                <option value="المرحلة الرابعة - المسائي">المرحلة الرابعة - المسائي</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Bulk Progression Action Bar -->
                     <div id="bulk-action-bar" class="hidden bg-white border border-primary/20 rounded-xl p-3 mb-4 flex items-center justify-between shadow-sm shadow-primary/5 transition-all">
                         <div class="flex items-center gap-3">
-                            <span class="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold" id="bulk-selected-count">1 Selected</span>
-                            <span class="text-sm font-bold text-slate-700 hidden sm:block">Action:</span>
+                            <span class="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold" id="bulk-selected-count" data-i18n="bulk-selected">1 Selected</span>
+                            <span class="text-sm font-bold text-slate-700 hidden sm:block" data-i18n="action-label">Action:</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <select id="target-academic-year" class="text-xs rounded border-slate-200 px-2 py-1.5 w-24 sm:w-32 focus:ring-primary focus:border-primary cursor-pointer">
-                                <option value="" disabled selected data-i18n-placeholder="academic-year">Target Year</option>
+                                <option value="" disabled selected data-i18n="target-year-label">Target Year</option>
                             </select>
-                            <button id="btn-bulk-promote" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded font-bold text-[10px] sm:text-xs transition-colors border border-emerald-200 uppercase tracking-wider">Promote</button>
-                            <button id="btn-bulk-retain" class="bg-orange-50 text-orange-600 hover:bg-orange-100 px-3 py-1.5 rounded font-bold text-[10px] sm:text-xs transition-colors border border-orange-200 uppercase tracking-wider">Fail</button>
-                            <button id="btn-bulk-graduate" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded font-bold text-[10px] sm:text-xs transition-colors border border-blue-200 uppercase tracking-wider">Graduate</button>
+                            <button id="btn-bulk-promote" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-3 py-1.5 rounded font-bold text-[10px] sm:text-xs transition-colors border border-emerald-200 uppercase tracking-wider" data-i18n="promote">Promote</button>
+                            <button id="btn-bulk-retain" class="bg-orange-50 text-orange-600 hover:bg-orange-100 px-3 py-1.5 rounded font-bold text-[10px] sm:text-xs transition-colors border border-orange-200 uppercase tracking-wider" data-i18n="fail">Fail</button>
+                            <button id="btn-bulk-graduate" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded font-bold text-[10px] sm:text-xs transition-colors border border-orange-200 uppercase tracking-wider" data-i18n="graduate">Graduate</button>
                         </div>
                     </div>
 

@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const inputSal = document.getElementById('student-grade-hidden');
     const btnSubmit = document.getElementById('btn-submit-student');
 
+    const searchInput = document.getElementById('search-students');
+    const filterStage = document.getElementById('filter-stage');
+
     let currentPhotoBase64 = "";
 
     // Load initial data
@@ -166,26 +169,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. Fetch and Render Table Data
     async function loadStudents() {
+        const searchTerm = searchInput?.value.toLowerCase() || '';
+        const stageFilter = filterStage?.value || 'all';
+
         try {
-            const { data, error, count } = await supabase
+            let query = supabase
                 .from('students')
                 .select('*', { count: 'exact' })
                 .eq('college_id', userId)
-                .neq('status', 'Graduated')
-                .order('student_id', { ascending: false });
+                .neq('status', 'Graduated');
+            
+            if (stageFilter !== 'all') {
+                query = query.eq('grade', stageFilter);
+            }
+
+            const { data, error, count } = await query.order('student_id', { ascending: false });
 
             if (error) throw error;
+
+            // Filter by search term locally for responsiveness if data is already fetched
+            // OR we could do it in the query. Let's do it in the query if possible, 
+            // but Supabase .or() with ilike is complex for multiple columns.
+            // Since student lists are usually < 1000 per college, local filter is fine.
+            let filteredData = data;
+            if (searchTerm) {
+                filteredData = data.filter(s => 
+                    s.student_name.toLowerCase().includes(searchTerm) || 
+                    s.student_id.toLowerCase().includes(searchTerm)
+                );
+            }
 
             // Updated Stats KPI
             if (kpiTotalStudents) kpiTotalStudents.textContent = count || 0;
 
             tbody.innerHTML = '';
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">No workforce data available. Register a student above.</td></tr>`;
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">No students found matching your criteria.</td></tr>`;
                 return;
             }
 
-            data.forEach(w => {
+            filteredData.forEach(w => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition-all group border-b border-transparent hover:border-slate-100 hover:-translate-y-[1px] hover:shadow-[0_4px_12px_-5px_rgba(0,0,0,0.06)] relative z-0 hover:z-10";
 
@@ -505,12 +528,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    if (searchInput) searchInput.addEventListener('input', loadStudents);
+    if (filterStage) filterStage.addEventListener('change', loadStudents);
+
     function updateBulkActionBar() {
         if (!bulkActionBar) return;
         const checked = document.querySelectorAll('.student-cb:checked').length;
         if (checked > 0) {
             bulkActionBar.classList.remove('hidden');
-            bulkSelectedCount.textContent = `${checked} Selected`;
+            
+            // Localized count
+            const lang = window.WMSSettings?.get('lang') || 'en';
+            const template = window.WMS_I18N[lang]['bulk-selected'] || '{n} Selected';
+            bulkSelectedCount.textContent = template.replace('{n}', checked);
         } else {
             bulkActionBar.classList.add('hidden');
             if(selectAllCheckbox) selectAllCheckbox.checked = false;
