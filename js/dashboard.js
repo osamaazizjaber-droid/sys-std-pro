@@ -30,10 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             let attendanceQuery = supabase.from('attendance')
                 .select('*', { count: 'exact', head: true })
                 .eq('date', today)
-                .in('status', ['Present', 'Active Shift', 'Completed']);
+                .eq('status', 'Present');
                 
-            // Optional: Filter attendance by academic year if students record in it matches current
-            // For now, let's keep it date-based but verify naming
+            if (currentYear) attendanceQuery = attendanceQuery.eq('academic_year', currentYear);
             
             const { count: presentCount, error: pErr } = await attendanceQuery;
             if (pErr) throw pErr;
@@ -58,6 +57,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadMetrics();
 
     // Re-load metrics if academic year changes
+    window.addEventListener('wms-settings-update', (e) => {
+        if (e.detail.k === 'academic_year') {
+            loadMetrics();
+        }
+    });
+
     window.addEventListener('storage', (e) => {
         if (e.key === 'wms-pro-settings') {
             loadMetrics();

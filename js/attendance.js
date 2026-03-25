@@ -179,6 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     date: scanDate,
                     subject: subj,
                     grade: student.grade,
+                    academic_year: window.WMSSettings?.get('academic_year') || '',
                     status: document.getElementById('attendance-status')?.value || 'Present',
                     check_in: scanTime,
                     notes: 'Auto-Log'
