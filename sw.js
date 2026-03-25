@@ -1,13 +1,19 @@
-const CACHE_NAME = 'wms-pro-cache-v4';
+const CACHE_NAME = 'wms-pro-cache-v5';
 const STATIC_ASSETS = [
     './',
     './auth.html',
-    './favicon.png',
+    './stdscanner.html',
     './manifest.json',
+    './manifest_scanner.json',
+    './favicon.png',
+    './logo.png',
     './css/style.css',
+    './css/themes.css',
     './js/config.js',
     './js/auth.js',
-    './js/app.js'
+    './js/app.js',
+    './js/scanner.js',
+    './js/settings.js'
 ];
 
 self.addEventListener('install', (event) => {
