@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wms-pro-cache-v3';
+const CACHE_NAME = 'wms-pro-cache-v4';
 const STATIC_ASSETS = [
     './',
     './auth.html',
