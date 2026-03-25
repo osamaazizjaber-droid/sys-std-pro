@@ -4,13 +4,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const supabase = window.sbClient;
     if(!supabase) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const userId = user.id;
+
     const form = document.getElementById('professor-form');
     const tbody = document.getElementById('professors-tbody');
 
     async function loadProfessorsData() {
         try {
             tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400 font-bold tracking-widest uppercase"><span class="material-symbols-outlined animate-spin align-middle me-2">sync</span> <span data-i18n="loading-professors">Loading Professors...</span></td></tr>`;
-            const { data, error } = await supabase.from('professors').select('*').order('prof_id', { ascending: false });
+            const { data, error } = await supabase.from('professors').select('*').eq('college_id', userId).order('prof_id', { ascending: false });
             
             if (error) throw error;
             renderProfessorsQueue(data);
@@ -46,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.deleteProfessor = async function(id) {
         if (!confirm("Are you sure you want to remove this professor?")) return;
         try {
-            const { error } = await supabase.from('professors').delete().eq('prof_id', id);
+            const { error } = await supabase.from('professors').delete().eq('college_id', userId).eq('prof_id', id);
             if (error) throw error;
             loadProfessorsData();
         } catch (err) { alert(err.message); }
@@ -88,6 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const payload = {
                 prof_id: "PRF-" + Math.floor(Math.random()*1000000),
+                college_id: userId,
                 prof_name: pName,
                 status: 'Active',
                 photo_url: currentPhotoBase64 // Changed 'photo' to 'photo_url' for consistency

@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const userId = user.id;
+
     const attDateInput = document.getElementById('attendance-date');
     const attBarcodeInput = document.getElementById('attendance-barcode');
     const tbody = document.getElementById('attendance-tbody');
@@ -27,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function loadStudents() {
-        const { data } = await supabase.from('students').select('student_id, student_name, grade');
+        const { data } = await supabase.from('students').select('student_id, student_name, grade').eq('college_id', userId);
         if (data) {
             studentsList = data;
             if (gradeSelect) {
@@ -47,7 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function loadProfessors() {
-        const { data } = await supabase.from('professors').select('prof_id, prof_name');
+        const { data } = await supabase.from('professors').select('prof_id, prof_name').eq('college_id', userId);
         if (data && profSelect) {
             profsList = data;
             const lang = window.WMSSettings ? window.WMSSettings.get('lang') : 'en';
@@ -67,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function loadAssignments() {
-        const { data } = await supabase.from('subject_assignments').select('*, professors(prof_name)');
+        const { data } = await supabase.from('subject_assignments').select('*, professors(prof_name)').eq('college_id', userId);
         if (data) {
             allAssignments = data;
             updateSubjectDropdown();
@@ -146,7 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function processAttendanceScan(code) {
         let student = studentsList.find(s => s.student_id === code || s.student_name.toLowerCase().includes(code.toLowerCase()));
         if (!student) {
-            const { data } = await supabase.from('students').select('*').or(`student_id.eq.${code},student_name.ilike.%${code}%`).limit(1);
+            const { data } = await supabase.from('students').select('*').eq('college_id', userId).or(`student_id.eq.${code},student_name.ilike.%${code}%`).limit(1);
             if (data && data.length > 0) student = data[0];
         }
 
@@ -164,6 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const { data: existing } = await supabase.from('attendance')
                 .select('*')
+                .eq('college_id', userId)
                 .eq('student_id', student.student_id)
                 .eq('date', scanDate)
                 .eq('subject', subj);
@@ -172,6 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert(`${student.student_name} already logged for ${subj} today.`);
             } else {
                 await supabase.from('attendance').insert([{
+                    college_id: userId,
                     student_id: student.student_id,
                     student_name: student.student_name,
                     prof_id: profId,
@@ -194,7 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadAttendanceData() {
         const scanDate = attDateInput.value;
         tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-300">Loading...</td></tr>`;
-        const { data } = await supabase.from('attendance').select('*').eq('date', scanDate).order('id', {ascending: false});
+        const { data } = await supabase.from('attendance').select('*').eq('college_id', userId).eq('date', scanDate).order('id', {ascending: false});
         attendanceList = data || [];
         renderAttendanceTable();
     }
@@ -240,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.deleteAttendance = async (id) => {
         if (!confirm("Delete record?")) return;
-        await supabase.from('attendance').delete().eq('id', id);
+        await supabase.from('attendance').delete().eq('college_id', userId).eq('id', id);
         loadAttendanceData();
     };
 

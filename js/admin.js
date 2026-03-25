@@ -28,27 +28,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         'rejected': 'bg-red-100 text-red-800 border-red-200'
     };
 
-    window.loadCompanies = async () => {
-        const tbody = document.getElementById('companies-list');
+    window.loadcolleges = async () => {
+        const tbody = document.getElementById('colleges-list');
         tbody.innerHTML = `<tr><td colspan="5" class="p-12 text-center text-slate-400 font-bold"><span class="material-symbols-outlined animate-spin text-3xl mb-2">sync</span><br>Loading records...</td></tr>`;
 
-        const { data: companies, error } = await sbClient
-            .from('companies')
+        const { data: colleges, error } = await sbClient
+            .from('colleges')
             .select('*')
             .order('created_at', { ascending: false });
 
         if (error) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500 font-bold">Failed to load companies: ${error.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500 font-bold">Failed to load colleges: ${error.message}</td></tr>`;
             return;
         }
 
-        if (companies.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-12 text-center text-slate-400 font-bold">No companies registered yet.</td></tr>`;
+        if (colleges.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-12 text-center text-slate-400 font-bold">No colleges registered yet.</td></tr>`;
             return;
         }
 
         tbody.innerHTML = '';
-        companies.forEach(company => {
+        colleges.forEach(company => {
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-slate-50 transition-colors';
 
@@ -56,8 +56,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             tr.innerHTML = `
                 <td class="p-4">
-                    <div class="font-bold text-slate-900">${company.company_name}</div>
-                    <div class="text-xs text-slate-500 font-mono mt-1 px-1.5 py-0.5 bg-slate-100 rounded inline-block border border-slate-200">${company.company_code}</div>
+                    <div class="font-bold text-slate-900">${company.college_name}</div>
+                    <div class="text-xs text-slate-500 font-mono mt-1 px-1.5 py-0.5 bg-slate-100 rounded inline-block border border-slate-200">${company.college_code}</div>
                 </td>
                 <td class="p-4">
                     <div class="font-bold text-slate-700 text-sm">${company.full_name} <span class="text-slate-400 font-normal">(${company.position})</span></div>
@@ -74,12 +74,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </td>
                 <td class="p-4 text-right space-x-2 whitespace-nowrap">
                     ${company.status === 'pending' ? `
-                        <button onclick="window.confirmAction('${company.id}', 'approve', '${company.company_name}', '${company.email}')" 
+                        <button onclick="window.confirmAction('${company.id}', 'approve', '${company.college_name}', '${company.email}')" 
                                 title="Approve"
                                 class="inline-flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-600 hover:text-white border border-green-200 hover:border-green-600 px-2.5 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all">
                             <span class="material-symbols-outlined text-[18px]">check</span>
                         </button>
-                        <button onclick="window.confirmAction('${company.id}', 'reject', '${company.company_name}', '${company.email}')" 
+                        <button onclick="window.confirmAction('${company.id}', 'reject', '${company.college_name}', '${company.email}')" 
                                 title="Reject"
                                 class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white border border-amber-200 hover:border-amber-600 px-2.5 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all">
                             <span class="material-symbols-outlined text-[18px]">close</span>
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ` : `
                        <span class="text-xs font-bold text-slate-400 mr-2 inline-block">Processed</span>
                     `}
-                    <button onclick="window.confirmAction('${company.id}', 'delete', '${company.company_name}', '${company.email}')" 
+                    <button onclick="window.confirmAction('${company.id}', 'delete', '${company.college_name}', '${company.email}')" 
                             title="Delete Permanently"
                             class="inline-flex items-center gap-1 bg-slate-50 text-slate-700 hover:bg-red-600 hover:text-white border border-slate-200 hover:border-red-600 px-2.5 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all ml-1">
                         <span class="material-symbols-outlined text-[18px]">delete</span>
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             if (currentAction.type === 'delete') {
                 const { error: dbError } = await sbClient
-                    .from('companies')
+                    .from('colleges')
                     .delete()
                     .eq('id', currentAction.id);
 
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // 1. Update Database Status
                 const { error: dbError } = await sbClient
-                    .from('companies')
+                    .from('colleges')
                     .update({ status: newStatus })
                     .eq('id', currentAction.id);
 
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             action: 'company_status_change',
                             email: currentAction.email,
                             status: newStatus,
-                            company_name: currentAction.name
+                            college_name: currentAction.name
                         }).toString()
                     }).catch(err => console.error("Webhook trigger failed:", err));
                 }
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Success! Reload the list!
             closeModal();
-            loadCompanies();
+            loadcolleges();
 
         } catch (err) {
             alert(err.message);
@@ -224,5 +224,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Initial Load
-    loadCompanies();
+    loadcolleges();
 });

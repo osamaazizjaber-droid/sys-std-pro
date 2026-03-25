@@ -6,6 +6,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        console.error("User not authenticated.");
+        return;
+    }
+    const userId = user.id;
+
     const tbody = document.getElementById('students-tbody');
     const kpiTotalStudents = document.getElementById('kpi-total-students');
     
@@ -108,6 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data: lastStudent, error: lastErr } = await supabase
                 .from('students')
                 .select('student_id')
+                .eq('college_id', userId)
                 .like('student_id', 'std%')
                 .order('student_id', { ascending: false })
                 .limit(1);
@@ -124,6 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const payload = {
                 student_id: nextId,
+                college_id: userId,
                 student_name: name,
                 grade: pos,
                 academic_year: year,
@@ -161,6 +170,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error, count } = await supabase
                 .from('students')
                 .select('*', { count: 'exact' })
+                .eq('college_id', userId)
                 .neq('status', 'Graduated')
                 .order('student_id', { ascending: false });
 
@@ -236,10 +246,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Delete Logic
     async function deleteStudent(id) {
         try {
-            const { error } = await supabase.from('students').delete().eq('student_id', id);
+            const { error } = await supabase.from('students').delete().eq('college_id', userId).eq('student_id', id);
             if (error) throw error;
             await loadStudents();
         } catch(error) {
@@ -272,7 +281,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.openEditModal = async function(id) {
         try {
-            const { data, error } = await supabase.from('students').select('*').eq('student_id', id).single();
+            const { data, error } = await supabase.from('students').select('*').eq('college_id', userId).eq('student_id', id).single();
             if (error) throw error;
 
             editInputId.value = data.student_id;
@@ -346,7 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
                 if (editInputYear) payload.academic_year = editInputYear.value;
 
-                const { data, error } = await supabase.from('students').update(payload).eq('student_id', id);
+                const { data, error } = await supabase.from('students').update(payload).eq('college_id', userId).eq('student_id', id);
                 if (error) throw error;
 
                 closeEditModal();
@@ -361,12 +370,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- CSV EXPORT LOGIC ---
     const btnExportCsv = document.getElementById('btn-export-csv');
     if (btnExportCsv) {
         btnExportCsv.addEventListener('click', async () => {
             try {
-                const { data, error } = await supabase.from('students').select('*').order('student_id', { ascending: true });
+                const { data, error } = await supabase.from('students').select('*').eq('college_id', userId).order('student_id', { ascending: true });
                 if (error) throw error;
                 if (!data || data.length === 0) return alert("No data to export.");
 
@@ -417,6 +425,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const { data: lastStudent } = await supabase
                         .from('students')
                         .select('student_id')
+                        .eq('college_id', userId)
                         .like('student_id', 'std%')
                         .order('student_id', { ascending: false })
                         .limit(1);
@@ -449,6 +458,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         newStudents.push({ 
                             student_id: id, 
+                            college_id: userId,
                             student_name: student_name, 
                             grade: pos,
                             academic_year: year || window.WMSSettings?.get('academic_year') || ''
@@ -527,7 +537,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!confirm(`Are you sure you want to ${actionType} ${selectedIds.length} students?`)) return;
 
         try {
-            const { data: studentsData, error: fetchErr } = await supabase.from('students').select('*').in('student_id', selectedIds);
+            const { data: studentsData, error: fetchErr } = await supabase.from('students').select('*').eq('college_id', userId).in('student_id', selectedIds);
             if (fetchErr) throw fetchErr;
 
             const historyInserts = [];
@@ -540,6 +550,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Record the outcome of the CURRENT year into history
                 historyInserts.push({
                     student_id: student.student_id,
+                    college_id: userId,
                     student_name: student.student_name,
                     academic_year: student.academic_year || 'Unknown',
                     grade: student.grade || 'Unknown',
@@ -567,7 +578,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     academic_year: update.academic_year,
                     grade: update.grade,
                     status: update.status
-                }).eq('student_id', update.student_id);
+                }).eq('college_id', userId).eq('student_id', update.student_id);
                 if (updErr) throw updErr;
             }
 

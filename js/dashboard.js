@@ -12,11 +12,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const kpiTotalProfessors = document.getElementById('kpi-total-professors');
 
     async function loadMetrics() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const userId = user.id;
         const currentYear = window.WMSSettings ? window.WMSSettings.get('academic_year') : '';
 
         // 1. Total Students
         try {
-            let studentQuery = supabase.from('students').select('*', { count: 'exact', head: true });
+            let studentQuery = supabase.from('students').select('*', { count: 'exact', head: true }).eq('college_id', userId);
             if (currentYear) studentQuery = studentQuery.eq('academic_year', currentYear);
             const { count: studentsCount, error: sErr } = await studentQuery;
             if (sErr) throw sErr;
@@ -32,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
             let attendanceQuery = supabase.from('attendance')
                 .select('*', { count: 'exact', head: true })
+                .eq('college_id', userId)
                 .eq('date', today)
                 .eq('status', 'Present');
             
@@ -52,7 +56,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const { count: profsCount, error: profErr } = await supabase
                 .from('professors')
-                .select('*', { count: 'exact', head: true });
+                .select('*', { count: 'exact', head: true })
+                .eq('college_id', userId);
             if (profErr) throw profErr;
             if (kpiTotalProfessors) kpiTotalProfessors.textContent = profsCount || 0;
         } catch (err) {

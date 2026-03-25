@@ -4,6 +4,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const supabase = window.sbClient;
     if(!supabase) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const userId = user.id;
+
     const form = document.getElementById('assignment-form');
     const tbody = document.getElementById('assignments-tbody');
     const profSelect = document.getElementById('assign-prof');
@@ -18,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function loadProfessors() {
-        const { data } = await supabase.from('professors').select('prof_id, prof_name').order('prof_name');
+        const { data } = await supabase.from('professors').select('prof_id, prof_name').eq('college_id', userId).order('prof_name');
         if (data) {
             professors = data;
             const lang = window.WMSSettings ? window.WMSSettings.get('lang') : 'en';
@@ -35,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadAssignments() {
         tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-300 animate-pulse">Loading assignments...</td></tr>`;
-        const { data, error } = await supabase.from('subject_assignments').select(`*, professors(prof_name)` );
+        const { data, error } = await supabase.from('subject_assignments').select(`*, professors(prof_name)` ).eq('college_id', userId);
         if (error) console.error(error);
         if (data) {
             assignments = data;
@@ -80,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     window.updateAssignmentProf = async (id, newProfId) => {
-        const { error } = await supabase.from('subject_assignments').update({ prof_id: newProfId }).eq('id', id);
+        const { error } = await supabase.from('subject_assignments').update({ prof_id: newProfId }).eq('id', id).eq('college_id', userId);
         if (error) {
             alert("Update failed: " + error.message);
             loadAssignments(); // Rollback UI
@@ -99,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.deleteAssignment = async (id) => {
         if (!confirm("Remove this assignment?")) return;
-        const { error } = await supabase.from('subject_assignments').delete().eq('id', id);
+        const { error } = await supabase.from('subject_assignments').delete().eq('id', id).eq('college_id', userId);
         if (error) alert(error.message);
         else loadAssignments();
     };
@@ -114,10 +118,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = true;
 
         const { error } = await supabase.from('subject_assignments').upsert([{
+            college_id: userId,
             stage_name: stage,
             subject_name: subject,
             prof_id: profId
-        }], { onConflict: 'stage_name, subject_name' });
+        }], { onConflict: 'college_id, stage_name, subject_name' });
 
         btn.disabled = false;
         if (error) {
@@ -167,6 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     newAssignments.push({
+                        college_id: userId,
                         stage_name: sName,
                         subject_name: subName,
                         prof_id: profId
@@ -176,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (newAssignments.length === 0) return alert("No valid assignments found.");
 
                 if (confirm(`Import ${newAssignments.length} assignments?`)) {
-                    const { error } = await supabase.from('subject_assignments').upsert(newAssignments, { onConflict: 'stage_name, subject_name' });
+                    const { error } = await supabase.from('subject_assignments').upsert(newAssignments, { onConflict: 'college_id, stage_name, subject_name' });
                     if (error) alert(error.message);
                     else {
                         alert("Successfully imported.");

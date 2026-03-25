@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 2. Check Company Status
                 const userId = authData.user.id;
                 const { data: company, error: companyError } = await sbClient
-                    .from('companies')
+                    .from('colleges')
                     .select('status')
                     .eq('id', userId)
                     .single();
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     email,
                     password,
                     options: {
-                        data: { full_name: fullName, company_name: companyName, university_name: universityName, department_name: departmentName } // Store metadata
+                        data: { full_name: fullName, college_name: companyName, university_name: universityName, department_name: departmentName } // Store metadata
                     }
                 });
 
@@ -123,15 +123,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const userId = authData.user.id;
 
-                // Generate a unique short college code (Stored in companies table for legacy compat)
+                // Generate a unique short college code (Stored in colleges table for legacy compat)
                 const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
                 const collegeCode = `COL-${randomString}`;
 
-                // 2. Insert into Companies Table
-                const { error: insertError } = await sbClient.from('companies').insert({
+                // 2. Insert into colleges Table
+                const { error: insertError } = await sbClient.from('colleges').insert({
                     id: userId,
-                    company_code: collegeCode,
-                    company_name: companyName,
+                    college_code: collegeCode,
+                    college_name: companyName,
                     university_name: universityName,
                     department_name: departmentName,
                     full_name: fullName,
